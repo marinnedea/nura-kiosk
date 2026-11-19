@@ -11,6 +11,7 @@ boot, and lets you use the volume buttons to navigate.
 - Starts automatically at boot and restarts if the browser crashes
 - Landscape or portrait, adjustable zoom and brightness
 - **Volume Down = Back, Volume Up = Home**, plus automatic return to your dashboard after a few minutes without touch
+- Grafana's time range picker stays pinned to the top while you scroll (customizable page CSS)
 - Everything is configured in one file, `/etc/conf.d/nura-kiosk`
 
 > **Status: tested on one phone only.** It's been tested on a **Samsung Galaxy A6+ (2018)**, and
@@ -124,6 +125,12 @@ sudo rc-service nura-kiosk restart
 | `KIOSK_IDLE_HOME` | `300` | Seconds without touch before returning to `KIOSK_URL` (`0` = never). |
 | `KIOSK_USER` | the installing user | User the browser runs as. |
 
+**Custom page CSS (Firefox):** `/etc/nura-kiosk/userContent.css` is applied to every page the
+kiosk shows. By default it pins Grafana's dashboard controls (time range picker, refresh,
+variables) to the top of the screen while the dashboard scrolls. Delete that block to turn it
+off, or add your own rules, e.g. to hide elements you don't want on the wall. Restart the
+kiosk after editing. The installer keeps your edited file on updates.
+
 **Portrait or landscape?** Portrait is much smoother. It's the screen's native orientation, so
 the compositor passes the browser's frames straight to the display. In landscape it has to
 rotate every frame on the GPU at full resolution, which makes scrolling and animations laggy
@@ -226,6 +233,7 @@ OpenRC
 | `install.sh` | install / update / `--uninstall`, run on the phone |
 | `deploy.sh` | runs `install.sh` on the phone from your computer |
 | `etc/conf.d/nura-kiosk` | settings |
+| `etc/nura-kiosk/userContent.css` | custom page CSS for Firefox (sticky Grafana controls) |
 | `etc/init.d/nura-kiosk`, `etc/init.d/nura-kiosk-keys` | OpenRC services |
 | `usr/local/bin/nura-kiosk-session` | runs inside cage, launches the browser |
 | `usr/local/bin/nura-kiosk-keys` | button and idle navigation daemon |

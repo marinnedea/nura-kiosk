@@ -27,7 +27,7 @@ if [ "${1:-}" = "--uninstall" ]; then
 	# shellcheck disable=SC2086
 	rm -f $FILES
 	sed -i 's|^#tty1::respawn|tty1::respawn|' /etc/inittab && kill -HUP 1 || true
-	echo "kept /etc/conf.d/nura-kiosk and installed packages; remove them manually if you want"
+	echo "kept /etc/conf.d/nura-kiosk, /etc/nura-kiosk/ and installed packages; remove them manually if you want"
 	exit 0
 fi
 
@@ -53,6 +53,11 @@ if [ -f /etc/conf.d/nura-kiosk ]; then
 else
 	install -m 644 etc/conf.d/nura-kiosk /etc/conf.d/nura-kiosk
 	sed -i "s/^KIOSK_USER=.*/KIOSK_USER=\"$KUSER\"/" /etc/conf.d/nura-kiosk
+fi
+if [ -f /etc/nura-kiosk/userContent.css ]; then
+	echo "   keeping your existing /etc/nura-kiosk/userContent.css"
+else
+	install -D -m 644 etc/nura-kiosk/userContent.css /etc/nura-kiosk/userContent.css
 fi
 
 say "system setup (user $KUSER)"
@@ -83,5 +88,6 @@ cat <<EOF
 
 Done. The page should appear on the phone's screen in about 30-60 seconds.
   Settings:  /etc/conf.d/nura-kiosk   (then: sudo rc-service nura-kiosk restart)
+  Page CSS:  /etc/nura-kiosk/userContent.css (Firefox)
   Logs:      /var/log/nura-kiosk.log, /var/log/nura-kiosk-keys.log
 EOF

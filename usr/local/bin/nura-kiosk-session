@@ -39,7 +39,15 @@ user_pref("layout.css.prefers-color-scheme.content-override", 0);
 user_pref("gfx.webrender.all", true);
 user_pref("dom.w3c_touch_events.enabled", 1);
 user_pref("apz.allow_zooming", false);
+user_pref("toolkit.legacyUserProfileCustomizations.stylesheets", true);
 EOF
+	# Custom page CSS (e.g. sticky Grafana controls), see /etc/nura-kiosk/userContent.css
+	mkdir -p "$PROFILE/chrome"
+	if [ -r /etc/nura-kiosk/userContent.css ]; then
+		cp /etc/nura-kiosk/userContent.css "$PROFILE/chrome/userContent.css"
+	else
+		rm -f "$PROFILE/chrome/userContent.css"
+	fi
 	# Zoom inside Firefox instead of fractional compositor scaling (renders at native resolution)
 	echo "user_pref(\"layout.css.devPixelsPerPx\", \"${KIOSK_ZOOM:-1.5}\");" >> "$PROFILE/user.js"
 	# Home page = dashboard, so Alt+Home (Volume Up, see nura-kiosk-keys) returns to it

@@ -1,0 +1,15 @@
+/*
+ * nura-kiosk custom stylesheet (Firefox only).
+ * Applied to every page the kiosk shows. Edit, then: sudo rc-service nura-kiosk restart
+ */
+
+/* Grafana: keep the dashboard controls (time range picker, refresh, variables, links)
+   pinned to the top of the screen while the dashboard scrolls. Delete this block if you
+   don't want it. Matches Grafana 11+ ("dashboard-controls-chrome" wrapper). */
+[class*="dashboard-controls-chrome"] {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 1000 !important;
+}
+.theme-dark [class*="dashboard-controls-chrome"] { background-color: #111217 !important; }
+.theme-light [class*="dashboard-controls-chrome"] { background-color: #f4f5f5 !important; }
