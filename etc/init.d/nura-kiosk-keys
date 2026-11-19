@@ -1,0 +1,22 @@
+#!/sbin/openrc-run
+# Volume keys = Back/Home for the kiosk browser, plus return-to-home after idle.
+
+name="nura-kiosk-keys"
+description="Hardware-button navigation for nura-kiosk"
+
+supervisor="supervise-daemon"
+command="/usr/local/bin/nura-kiosk-keys"
+respawn_delay=5
+respawn_max=0
+output_log="/var/log/nura-kiosk-keys.log"
+error_log="/var/log/nura-kiosk-keys.log"
+
+start_pre() {
+	checkpath -f -m 0644 /var/log/nura-kiosk-keys.log
+}
+
+depend() {
+	# Start before the kiosk so cage sees the uinput keyboard at startup
+	before nura-kiosk
+	after udev
+}

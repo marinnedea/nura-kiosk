@@ -1,0 +1,53 @@
+#!/sbin/openrc-run
+# Full-screen browser kiosk on the phone's built-in display: cage (Wayland) + Firefox/Chromium.
+# Settings: /etc/conf.d/nura-kiosk
+
+name="nura-kiosk"
+description="Browser kiosk in cage on the built-in display"
+
+: ${KIOSK_USER:=user}
+
+supervisor="supervise-daemon"
+command="/usr/bin/cage"
+# -s: allow VT switching (Ctrl+Alt+F2 for a text console if a keyboard is attached)
+command_args="-s -- /usr/local/bin/nura-kiosk-session"
+command_user="${KIOSK_USER}"
+respawn_delay=5
+respawn_max=0
+output_log="/var/log/nura-kiosk.log"
+error_log="/var/log/nura-kiosk.log"
+
+depend() {
+	need seatd localmount
+	# nura-kiosk-keys' uinput keyboard must exist before cage starts (cage ignores keyboards added later)
+	use nura-kiosk-keys
+	after networkmanager ntpd nura-kiosk-keys
+}
+
+start_pre() {
+	local uid i b max
+	uid=$(id -u "${KIOSK_USER}") || { eerror "KIOSK_USER '${KIOSK_USER}' does not exist"; return 1; }
+	export XDG_RUNTIME_DIR="/run/user/${uid}"
+	export HOME="$(getent passwd "${KIOSK_USER}" | cut -d: -f6)"
+	export LIBSEAT_BACKEND=seatd
+
+	# Wait (max 10s) for nura-kiosk-keys' virtual keyboard so cage sees it at startup
+	i=0
+	while [ $i -lt 20 ] && ! grep -q 'nura-kiosk-virtual-kbd' /proc/bus/input/devices; do
+		sleep 0.5; i=$((i + 1))
+	done
+
+	checkpath -d -m 0755 -o root:root /run/user
+	checkpath -d -m 0700 -o "${KIOSK_USER}:${KIOSK_USER}" "${XDG_RUNTIME_DIR}"
+	checkpath -f -m 0644 -o "${KIOSK_USER}:${KIOSK_USER}" /var/log/nura-kiosk.log
+
+	# Backlight: KIOSK_BRIGHTNESS is a percentage of the panel's max_brightness
+	for b in /sys/class/backlight/*; do
+		[ -w "$b/brightness" ] || continue
+		max=$(cat "$b/max_brightness")
+		echo $(( max * ${KIOSK_BRIGHTNESS:-35} / 100 )) > "$b/brightness"
+	done
+
+	# No blinking text cursor behind the compositor
+	echo 0 > /sys/class/graphics/fbcon/cursor_blink 2>/dev/null || true
+}

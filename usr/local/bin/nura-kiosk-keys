@@ -1,0 +1,121 @@
+#!/usr/bin/python3
+"""Hardware-button navigation for the nura-kiosk browser (runs as root, see /etc/init.d/nura-kiosk-keys).
+
+  Volume Down -> Back  (Alt+Left)
+  Volume Up   -> Home  (Alt+Home; the browser's homepage is set to KIOSK_URL)
+  No touch for KIOSK_IDLE_HOME seconds after the last touch -> Home
+  SIGUSR1 -> Home, SIGUSR2 -> Back  (remote control, see README)
+
+Input devices are found by capability (any device with volume keys, any touchscreen),
+so this works across phones without hard-coded driver names.
+
+Keys are injected through a uinput virtual keyboard, which the compositor treats like
+real hardware (Firefox ignores the Wayland virtual-keyboard protocol used by wtype).
+"""
+import re
+import select
+import signal
+import sys
+import time
+
+import evdev
+from evdev import ecodes as e
+
+CONF = "/etc/conf.d/nura-kiosk"
+KBD_NAME = "nura-kiosk-virtual-kbd"
+
+
+def conf_value(key, default):
+    try:
+        with open(CONF) as f:
+            for line in f:
+                m = re.match(rf'\s*{key}="?([^"#\n]*)"?', line)
+                if m:
+                    return m.group(1).strip()
+    except OSError:
+        pass
+    return default
+
+
+def log(msg):
+    print(time.strftime("%F %T"), msg, flush=True)
+
+
+IDLE = int(conf_value("KIOSK_IDLE_HOME", "300") or 0)
+
+
+def find_devices():
+    """Return input devices that have volume keys or are touchscreens."""
+    found = {}
+    for path in evdev.list_devices():
+        d = evdev.InputDevice(path)
+        if d.name == KBD_NAME:
+            continue
+        caps = d.capabilities()
+        keys = set(caps.get(e.EV_KEY, []))
+        abs_axes = {a if isinstance(a, int) else a[0] for a in caps.get(e.EV_ABS, [])}
+        roles = []
+        if e.KEY_VOLUMEDOWN in keys:
+            roles.append("volume-down")
+        if e.KEY_VOLUMEUP in keys:
+            roles.append("volume-up")
+        if e.BTN_TOUCH in keys and e.ABS_MT_POSITION_X in abs_axes:
+            roles.append("touchscreen")
+        if roles:
+            found[d.fd] = d
+            log(f"watching {d.name} ({d.path}): {', '.join(roles)}")
+    return found
+
+
+kbd = evdev.UInput({e.EV_KEY: [e.KEY_LEFTALT, e.KEY_LEFT, e.KEY_HOME]}, name=KBD_NAME)
+time.sleep(1)  # let udev/the compositor pick up the new keyboard
+
+
+def combo(*keys):
+    for k in keys:
+        kbd.write(e.EV_KEY, k, 1)
+        kbd.syn()
+    time.sleep(0.05)
+    for k in reversed(keys):
+        kbd.write(e.EV_KEY, k, 0)
+        kbd.syn()
+
+
+def back():
+    log("back")
+    combo(e.KEY_LEFTALT, e.KEY_LEFT)
+
+
+def home():
+    log("home")
+    combo(e.KEY_LEFTALT, e.KEY_HOME)
+
+
+signal.signal(signal.SIGUSR1, lambda *_: home())
+signal.signal(signal.SIGUSR2, lambda *_: back())
+
+devices = find_devices()
+if not devices:
+    log("no volume keys or touchscreen found; only remote control (SIGUSR1/SIGUSR2) will work")
+
+last_touch = None
+while True:
+    r, _, _ = select.select(list(devices), [], [], 5)
+    for fd in r:
+        try:
+            events = list(devices[fd].read())
+        except OSError:
+            continue
+        for ev in events:
+            if ev.type != e.EV_KEY:
+                continue
+            if ev.code == e.KEY_VOLUMEDOWN and ev.value == 1:
+                back()
+            elif ev.code == e.KEY_VOLUMEUP and ev.value == 1:
+                home()
+            elif ev.code == e.BTN_TOUCH and ev.value == 1:
+                last_touch = time.monotonic()
+    if IDLE > 0 and last_touch is not None and time.monotonic() - last_touch >= IDLE:
+        last_touch = None
+        log(f"idle {IDLE}s")
+        home()
