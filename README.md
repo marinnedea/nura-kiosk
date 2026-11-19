@@ -9,10 +9,24 @@ boot, and lets you use the volume buttons to navigate.
 
 - Full-screen browser, no desktop: [cage](https://github.com/cage-kiosk/cage) (a single-app Wayland compositor) + Firefox in kiosk mode
 - Starts automatically at boot and restarts if the browser crashes
-- Landscape or portrait, adjustable zoom and brightness
+- Portrait or landscape, adjustable zoom and brightness
 - **Volume Down = Back, Volume Up = Home**, plus automatic return to your dashboard after a few minutes without touch
 - Grafana's time range picker stays pinned to the top while you scroll (customizable page CSS)
 - Everything is configured in one file, `/etc/conf.d/nura-kiosk`
+
+<p align="center">
+  <img src="docs/demo.gif" alt="Scrolling a Grafana dashboard on a phone running nura-kiosk" height="480">
+  &nbsp;
+  <img src="docs/phone-dashboard-top.jpg" alt="Grafana bar chart dashboard in portrait on the phone" height="480">
+  &nbsp;
+  <img src="docs/phone-dashboard-scrolled.jpg" alt="Scrolled down: the time range controls stay pinned at the top" height="480">
+</p>
+<p align="center"><sub>
+  A Samsung Galaxy A6+ (2018) running nura-kiosk in portrait, showing a public
+  <a href="https://play.grafana.org/d/ktMs4D6Mk/bar-charts-and-pie-charts">Grafana Play dashboard</a>.
+  Scrolling is touch-driven, and the time range controls stay pinned on top.
+  <a href="docs/demo.mp4">Video (MP4)</a>
+</sub></p>
 
 > **Status: tested on one phone only.** It's been tested on a **Samsung Galaxy A6+ (2018)**, and
 > that's the only device we currently know it works on. Nothing in it is specific to that phone,
