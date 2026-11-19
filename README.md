@@ -231,3 +231,7 @@ Tried it on another phone? Open an issue with the device, its Nura codename, and
 
 This is an independent project. It is not affiliated with or endorsed by Nura/postmarketOS.
 Flashing a phone erases it and can, in rare cases, make it unusable. You do this at your own risk.
+
+## License
+
+[MIT](LICENSE)
