@@ -4,8 +4,10 @@
 # &theme=dark (dark pixels are switched off on AMOLED screens: less power, less burn-in).
 KIOSK_URL="https://play.grafana.org/d/to6j8mh/grafana-play-home?orgId=1&kiosk&theme=dark&refresh=1m"
 
-# Screen rotation: normal | 90 | 180 | 270  (phones are portrait-native; 90 or 270 = landscape)
-KIOSK_TRANSFORM="90"
+# Screen rotation: normal (or 0) | 90 | 180 | 270
+# Phones are portrait-native. Portrait (normal) is much smoother: in landscape (90/270) the
+# compositor has to rotate every frame on the GPU, which makes scrolling and animations laggy.
+KIOSK_TRANSFORM="normal"
 
 # Compositor output scale. Keep 1: fractional values (e.g. 1.5) make the browser render at 2x
 # and downscale, which is very slow on phone hardware. Use KIOSK_ZOOM for text size instead.

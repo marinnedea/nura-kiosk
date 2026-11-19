@@ -2,8 +2,10 @@
 # Runs inside cage (the Wayland kiosk compositor): set rotation/scale, then run the browser fullscreen.
 . /etc/conf.d/nura-kiosk
 
+TRANSFORM="${KIOSK_TRANSFORM:-normal}"
+[ "$TRANSFORM" = 0 ] && TRANSFORM=normal   # wlr-randr calls 0 degrees "normal"
 OUT=$(wlr-randr 2>/dev/null | awk 'NR==1{print $1}')
-[ -n "$OUT" ] && wlr-randr --output "$OUT" --transform "${KIOSK_TRANSFORM:-90}" --scale "${KIOSK_SCALE:-1}"
+[ -n "$OUT" ] && wlr-randr --output "$OUT" --transform "$TRANSFORM" --scale "${KIOSK_SCALE:-1}"
 
 # Wait (up to ~2 min) until the page's host resolves, so we don't land on a DNS error page after boot
 HOST=$(echo "$KIOSK_URL" | sed -E 's|^[a-z]+://([^/:?]+).*|\1|')

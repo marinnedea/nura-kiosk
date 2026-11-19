@@ -115,7 +115,7 @@ sudo rc-service nura-kiosk restart
 | Setting | Default | What it does |
 |---|---|---|
 | `KIOSK_URL` | Grafana Play | The page to show. For Grafana, add `&kiosk&theme=dark` to the dashboard URL. |
-| `KIOSK_TRANSFORM` | `90` | Rotation: `normal`, `90`, `180`, `270`. Phones are portrait by default; `90`/`270` = landscape (try the other one if it's upside down). |
+| `KIOSK_TRANSFORM` | `normal` | Rotation: `normal` (or `0`), `90`, `180`, `270`. `normal` is the phone's native portrait and the smoothest; `90`/`270` = landscape (try the other one if it's upside down). See the rotation note below. |
 | `KIOSK_ZOOM` | `1.5` | Page zoom. Raise it if text is too small. |
 | `KIOSK_SCALE` | `1` | Screen scale. **Leave at 1** and use `KIOSK_ZOOM`. Fractional values make the browser much slower. |
 | `KIOSK_BRIGHTNESS` | `35` | Backlight in percent. |
@@ -124,9 +124,16 @@ sudo rc-service nura-kiosk restart
 | `KIOSK_IDLE_HOME` | `300` | Seconds without touch before returning to `KIOSK_URL` (`0` = never). |
 | `KIOSK_USER` | the installing user | User the browser runs as. |
 
+**Portrait or landscape?** Portrait is much smoother. It's the screen's native orientation, so
+the compositor passes the browser's frames straight to the display. In landscape it has to
+rotate every frame on the GPU at full resolution, which makes scrolling and animations laggy
+on phone hardware. Landscape is fine for dashboards that mostly sit still and refresh every
+minute or so. Note that in portrait, Grafana switches to its mobile layout and stacks panels in
+one column.
+
 **Dashboard tips:** phones are slow at heavy web apps, so design the dashboard to fit on one
-screen without scrolling, and use a dark theme. With `KIOSK_ZOOM=1.5` on a 1080p phone in
-landscape, the page sees roughly 1480×720 pixels.
+screen without scrolling, and use a dark theme. With `KIOSK_ZOOM=1.5` on a 1080×2220 phone the
+page sees roughly 720×1480 pixels in portrait, or 1480×720 in landscape.
 
 ## Using it
 
@@ -196,6 +203,8 @@ What we ran into on the tested phone. It may help on similar hardware (Snapdrago
 - Firefox renders with the GPU (Adreno 506, Mesa freedreno). Chromium's GPU process crashes
   with ANGLE, and `--use-gl=egl` silently falls back to software, so Chromium works only in software mode.
 - A fractional screen scale (1.5) made the browser render at 2× and downscale, which was very slow. Scale 1 plus browser zoom fixed it.
+- Landscape (rotated) scrolling was laggy even with the GPU working. In portrait (no rotation)
+  scrolling is smooth.
 - Firefox ignores the Wayland virtual-keyboard protocol (`wtype`), so the buttons inject keys
   through a kernel `uinput` device. cage only sees keyboards that exist when it starts, so the
   button service always starts first.
